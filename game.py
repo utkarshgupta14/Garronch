@@ -10,13 +10,25 @@ class Game():
 
         self.clock = pygame.time.Clock()
 
+        self.bg_color = (14, 150, 170)
+
         self.img = pygame.image.load("data/images/clouds/cloud_1.png")
         self.img_pos = [270, 220]
+        self.img.set_colorkey((0,0,0))
+
         self.movement = [False, False, False, False]
+
+        self.collision_area = pygame.Rect(400, 350, 100, 50)
     
     def run(self):
         while True:
-            self.screen.fill((14, 219, 219))
+            self.screen.fill(self.bg_color)
+
+            img_r = pygame.Rect(*self.img_pos, *self.img.get_size())
+            if img_r.colliderect(self.collision_area):
+                pygame.draw.rect(self.screen, (0, 200, 200), self.collision_area)
+            else:
+                pygame.draw.rect(self.screen, (14, 170, 190), self.collision_area)
 
             self.img_pos[1] += (self.movement[1] - self.movement[0]) * 8
             self.img_pos[0] += (self.movement[3] - self.movement[2]) * 10
