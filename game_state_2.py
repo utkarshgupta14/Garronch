@@ -9,7 +9,8 @@ class Game():
         pygame.init()
 
         pygame.display.set_caption('Garronch')
-        self.screen = pygame.display.set_mode((600, 480))
+        self.screen = pygame.display.set_mode((640, 480))
+        self.display = pygame.Surface((320, 240))
 
         self.clock = pygame.time.Clock()
 
@@ -25,10 +26,10 @@ class Game():
     
     def run(self):
         while True:
-            self.screen.fill(self.bg_color)
+            self.display.fill(self.bg_color)
 
-            self.player.update(((self.movement[1] - self.movement[0]) * 5, 0))
-            self.player.render(self.screen)
+            self.player.update(((self.movement[1] - self.movement[0]) * 2, 0))
+            self.player.render(self.display)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -45,6 +46,7 @@ class Game():
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = False
 
+            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
             self.clock.tick(60)
 
