@@ -5,6 +5,20 @@ NEIGHBOR_OFFSET = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1),
 
 PHYSICS_TILES = {'grass', 'stone'}
 
+AUTOTILE_TILES = {'grass', 'stone'}
+AUTOTILE_MAP = {
+    tuple(sorted([(1, 0), (0, 1)])) : 0,
+    tuple(sorted([(0, 1), (-1, 0), (1, 0)])) : 1,
+    tuple(sorted([(-1, 0), (0, 1)])) : 2,
+    tuple(sorted([(-1, 0), (0, -1), (0, 1)])) : 3,
+    tuple(sorted([(-1, 0), (0, -1)])) : 4,
+    tuple(sorted([(-1, 0), (0, -1), (1, 0)])) : 5,
+    tuple(sorted([(1, 0), (0, -1)])) : 6,
+    tuple(sorted([(1, 0), (0, -1), (0, 1)])) : 7,
+    tuple(sorted([(1, 0), (0, 1), (-1, 0), (0, -1)])) : 8,
+}
+AUTOTILE_OFFSETS = [(-1, 0), (0, -1), (1, 0), (0, 1)]
+
 class Tilemap:
     def __init__(self, game, tile_size=16):
         self.tile_size = tile_size
@@ -25,6 +39,21 @@ class Tilemap:
         self.tilemap = map_data['tilemap']
         self.tile_size = map_data['tile_size']
         self.offgrid_tiles = map_data['offgrid']
+
+    def autotile(self):
+        for tile_loc in self.tilemap:
+            tile = self.tilemap[tile_loc]
+            if tile['type'] in AUTOTILE_TILES:
+                tiles_around = []
+                for offset in AUTOTILE_OFFSETS:
+                    check_loc = str(tile['pos'][0] + offset[0]) + ';' + str(tile['pos'][1] + offset[1])
+                    if check_loc in self.tilemap:
+                        if self.tilemap[check_loc]['type'] == tile['type']:
+                            tiles_around.append(offset)
+
+                tiles_around = tuple(sorted(tiles_around))
+                if tiles_around in AUTOTILE_MAP:
+                    self.tilemap[tile_loc]['variant'] = AUTOTILE_MAP[tiles_around]
         
     def tiles_around(self, pos):
         tiles_around = []
