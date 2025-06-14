@@ -1,5 +1,6 @@
 import pygame
 import json
+import copy
 
 NEIGHBOR_OFFSET = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)]
 
@@ -25,6 +26,26 @@ class Tilemap:
         self.game = game
         self.tilemap = {}
         self.offgrid_tiles = []
+    
+    def extract(self, id_pairs, keep=False):
+        matches = []
+        for tile in self.offgrid_tiles.copy():
+            if(tile['type'], tile['variant']) in id_pairs:
+                matches.append(copy.deepcopy(tile))
+                if not keep:
+                    self.offgrid_tiles.remove(tile)
+        
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(copy.deepcopy(tile))
+                matches[-1]['pos'] = matches[-1]['pos']
+                matches[-1]['pos'][0] *= self.tile_size
+                matches[-1]['pos'][1] *= self.tile_size
+                if not keep:
+                    del(self.ftilemap[loc])
+        
+        return matches
 
     def save(self, path):
         f = open(path, 'w')
