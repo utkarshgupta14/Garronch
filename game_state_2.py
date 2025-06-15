@@ -59,23 +59,29 @@ class Game():
         while True:
             self.display.blit(self.assets['background'], (0, 0))
 
+            # camera
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
             self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
+            # add leaf particles
             for rect in self.leaf_spawners:
                 if random.random() * 59999 < rect.width * rect.height:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'leaf', pos, velocity=[-0.1, 0.2], frame=random.randint(0, 20)))
 
+            # clouds
             self.clouds.update()
             self.clouds.render(self.display, offset=render_scroll)
 
+            # render tiles
             self.tilemap.render(self.display, offset=render_scroll)
 
+            # update player pos
             self.player.update(self.tilemap, ((self.movement[1] - self.movement[0]) * 1, 0))
             self.player.render(self.display, offset=render_scroll)
 
+            # render leaf particles
             for particle in self.particles.copy():
                 kill = particle.update()
                 particle.render(self.display, offset=render_scroll)
@@ -84,6 +90,7 @@ class Game():
                 if kill:
                     self.particles.remove(particle)
 
+            # game loop
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -94,7 +101,7 @@ class Game():
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = True
                     if event.key == pygame.K_UP:
-                        self.player.velocity[1] = -3
+                        self.player.jump()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False
