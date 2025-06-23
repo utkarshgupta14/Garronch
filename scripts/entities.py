@@ -178,6 +178,13 @@ class Enemy(PhysicsEntity):
             else:
                 self.flip = not self.flip
             self.walking = max(self.walking-1, 0)
+            if not self.walking:
+                dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
+                if abs(dis[1]) < 16 and abs(dis[0]) < 160:
+                    if self.flip and dis[0] < 0:
+                        self.game.projectiles.append([[self.rect().centerx - 4, self.rect().centery], -1.5, 0 ])
+                    if not self.flip and dis[0] > 0:
+                        self.game.projectiles.append([[self.rect().centerx + 4, self.rect().centery], +1.5, 0 ])
         elif random.random() < 0.01:
             self.walking = random.randint(30, 120)
     
@@ -187,6 +194,15 @@ class Enemy(PhysicsEntity):
             self.set_action('run')
         else:
             self.set_action('idle')
+    
+    def render(self, surf, offset=(0, 0)):
+        super().render(surf, offset=offset)
+
+        if self.flip:
+            surf.blit(pygame.transform.flip(self.game.assets['gun'], True, False), (self.rect().centerx - 2 - self.game.assets['gun'].get_width() - offset[0], self.rect().centery - offset[1]))
+        else:
+            surf.blit(self.game.assets['gun'], (self.rect().centerx + 2 - offset[0], self.rect().centery - offset[1]))
+
 
 
 
