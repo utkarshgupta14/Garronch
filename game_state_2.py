@@ -2,6 +2,7 @@ import sys
 import pygame
 import random
 import math
+import os
 
 from scripts.particles import Particle
 from scripts.entities import PhysicsEntity, Player, Enemy
@@ -48,7 +49,11 @@ class Game():
         self.player = Player(self, (50, 50), (8, 15)) 
 
         self.tilemap = Tilemap(self, tile_size=16)
-        self.load_level(0)
+
+        self.level = 0
+        self.load_level(self.level)
+
+        self.screen_shake = 0
 
     def load_level(self, map_id):
         self.tilemap.load('data/maps/' + str(map_id) + '.json')
@@ -62,6 +67,7 @@ class Game():
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
+                self.player.air_time = 0
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))
 
@@ -71,13 +77,26 @@ class Game():
 
         self.scroll = [0, 0] 
         self.dead = 0
+        self.transition = -30
     
     def run(self):
         while True:
             self.display.blit(self.assets['background'], (0, 0))
 
+            self.screen_shake = max(0, self.screen_shake - 1)
+
+            if not len(self.enemies):
+                self.transition += 1
+                if self.transition > 30:
+                    self.level = min(self.level + 1, len(os.listdir('data/maps')) - 1)
+                    self.load_level(self.level)
+            if self.transition < 0:
+                self.transition += 1
+
             if self.dead:
                 self.dead += 1
+                if self.dead >= 10:
+                    self.transition = min(30, self.transition + 1)
                 if self.dead > 40:
                     self.load_level(0)
 
@@ -125,9 +144,10 @@ class Game():
                 elif projectile[2] > 360:
                     self.projectiles.remove(projectile)
                 elif abs(self.player.dashing) < 50:
-                    if self.player.rect().collidepoint(projectile[0]):
+                    if self.player.rect().collidepoint(projectile[0]): # player gets shot
                         self.projectiles.remove(projectile)
                         self.dead += 1
+                        self.screen_shake = max(32, self.screen_shake)
                         for i in range(30):
                             angle = random.random() * math.pi * 2
                             speed = random.random() * 5
@@ -170,7 +190,14 @@ class Game():
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = False
 
-            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
+            if self.transition:
+                transition_surf = pygame.Surface(self.display.get_size())
+                pygame.draw.circle(transition_surf, (255, 255, 255), (self.display.get_width() // 2, self.display.get_height() // 2), (30 - abs(self.transition)) * 8)
+                transition_surf.set_colorkey((255, 255, 255))
+                self.display.blit(transition_surf, (0, 0))
+
+            screenshake_offset = (random.random() * self.screen_shake - self.screen_shake / 2, random.random() * self.screen_shake - self.screen_shake / 2)
+            self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), screenshake_offset)
             pygame.display.update()
             self.clock.tick(60)
 
