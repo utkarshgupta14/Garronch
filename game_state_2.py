@@ -8,6 +8,7 @@ from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import *
 from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
+from scripts.spark import Spark
 
 class Game():
     def __init__(self):
@@ -47,10 +48,10 @@ class Game():
         self.player = Player(self, (50, 50), (8, 15)) 
 
         self.tilemap = Tilemap(self, tile_size=16)
-        try:
-            self.tilemap.load('map.json')
-        except FileNotFoundError:
-            pass
+        self.load_level(0)
+
+    def load_level(self, map_id):
+        self.tilemap.load('data/maps/' + str(map_id) + '.json')
 
         self.leaf_spawners = []
         for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
@@ -66,12 +67,19 @@ class Game():
 
         self.projectiles = []
         self.particles = []
+        self.sparks = []
 
         self.scroll = [0, 0] 
+        self.dead = 0
     
     def run(self):
         while True:
             self.display.blit(self.assets['background'], (0, 0))
+
+            if self.dead:
+                self.dead += 1
+                if self.dead > 40:
+                    self.load_level(0)
 
             # camera
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
@@ -93,12 +101,15 @@ class Game():
 
             # render enemies
             for enemy in self.enemies.copy():
-                enemy.update(self.tilemap, (0, 0))
+                kill = enemy.update(self.tilemap, (0, 0))
                 enemy.render(self.display, offset=render_scroll)
+                if kill:
+                    self.enemies.remove(enemy)
 
             # update player pos
-            self.player.update(self.tilemap, ((self.movement[1] - self.movement[0]) * 1, 0))
-            self.player.render(self.display, offset=render_scroll)
+            if not self.dead:
+                self.player.update(self.tilemap, ((self.movement[1] - self.movement[0]) * 1, 0))
+                self.player.render(self.display, offset=render_scroll)
 
             # render projectiles
             # projectile -> [[x, y], direction, timer]
@@ -109,11 +120,26 @@ class Game():
                 self.display.blit(img, (projectile[0][0] - img.get_width() / 2 - render_scroll[0], projectile[0][1] - img.get_height() / 2 - render_scroll[1]))
                 if self.tilemap.solid_check(projectile[0]):
                     self.projectiles.remove(projectile)
+                    for i in range(4):
+                        self.sparks.append(Spark(projectile[0], random.random() - 0.5 + (math.pi if projectile[1] > 0 else 0), 2 + random.random(), 0.05 + random.random() * 0.1))
                 elif projectile[2] > 360:
                     self.projectiles.remove(projectile)
                 elif abs(self.player.dashing) < 50:
                     if self.player.rect().collidepoint(projectile[0]):
                         self.projectiles.remove(projectile)
+                        self.dead += 1
+                        for i in range(30):
+                            angle = random.random() * math.pi * 2
+                            speed = random.random() * 5
+                            self.sparks.append(Spark(self.player.rect().center, angle, 2+random.random(), 0.05 + random.random() * 0.1))
+                            self.particles.append(Particle(self, 'particle', self.player.rect().center, velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+
+            # sparks
+            for spark in self.sparks.copy():
+                kill = spark.update()
+                spark.render(self.display, offset=render_scroll)
+                if kill:
+                    self.sparks.remove(spark)
 
             # render leaf particles
             for particle in self.particles.copy():
