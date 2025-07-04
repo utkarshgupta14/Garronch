@@ -99,6 +99,7 @@ class Player(PhysicsEntity):
             
         self.wall_slide = False
         if(self.collisions['right'] or self.collisions['left']) and self.air_time>4:
+            self.air_time = 5
             self.wall_slide = True
             self.velocity[1] = min(self.velocity[1], 0.5)  
             if self.collisions['right']:
@@ -163,6 +164,7 @@ class Player(PhysicsEntity):
         
     def dash(self):
         if not self.dashing:
+            self.game.sfx['dash'].play()
             if self.flip:
                 self.dashing = -60
             else:
@@ -188,10 +190,12 @@ class Enemy(PhysicsEntity):
                 dis = (self.game.player.pos[0] - self.pos[0], self.game.player.pos[1] - self.pos[1])
                 if abs(dis[1]) < 16 and abs(dis[0]) < 160:
                     if self.flip and dis[0] < 0:
+                        self.game.sfx['shoot'].play()
                         self.game.projectiles.append([[self.rect().centerx - 4, self.rect().centery], -1.5, 0 ])
                         for i in range(4):
                             self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random(), 0.05 + random.random() * 0.1))
                     if not self.flip and dis[0] > 0:
+                        self.game.sfx['shoot'].play()
                         self.game.projectiles.append([[self.rect().centerx + 4, self.rect().centery], +1.5, 0 ])
                         for i in range(4):
                             self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5, 2 + random.random(), 0.05 + random.random() * 0.1))
@@ -209,6 +213,7 @@ class Enemy(PhysicsEntity):
         if abs(self.game.player.dashing) >= 50:
             if self.rect().colliderect(self.game.player.rect()):
                 self.game.screen_shake = max(16, self.game.screen_shake)
+                self.game.sfx['hit'].play()
                 for i in range(30):
                     angle = random.random() * math.pi * 2
                     speed = random.random() * 5
