@@ -66,12 +66,14 @@ Garronch is an innovative 2D platformer game built with Python and Pygame, featu
 ```
 Garronch/
 ├── Game.py                  # Main game script
-├── game_state_1.py
+├── game_state_1.py          # Game states
 ├── game_state_2.py
 ├── scripts/
-│   ├── head_movement.py     # Gesture recognition script
+│   ├── head_movement.py     # references scripts
 │   ├── head_movement_demo.py
-│   └── spark.py
+│   |── spark.py
+|   |-- utils.py
+|   |-- ........
 ├── data/
    ├── images/
    ├── maps/
